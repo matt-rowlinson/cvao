@@ -6,8 +6,6 @@ Created on Tue Jan 21 14:24:25 2020
 @author: mjr583
 """
 import sys
-sys.path.append('/users/mjr583/python_lib')
-import RowPy as rp
 import CVAO_tools as CV
 from CVAO_dict import CVAO_dict as d
 import matplotlib.pyplot as plt
@@ -15,6 +13,7 @@ import pandas as pd
 import netCDF4
 import numpy as np
 from sites_dicts import EPA_dict
+
 plt.rcParams['figure.figsize'] = (12, 4)
 gaw_path = '/users/mjr583/scratch/NCAS_CVAO/GAW_datasets/'
 epa_path = '/users/mjr583/scratch/NCAS_CVAO/EPA_datasets/'
@@ -51,6 +50,7 @@ for n, df in enumerate(dfs):
     time=dates[idx]
     
     z, p = np.polyfit(X, Y, 1)
+    print(z)
     output = CV.curve_fit_function(df, X, Y, start, timestep=timestep)
    
     outputs.append(output) ; times.append(time)
@@ -70,5 +70,3 @@ plt.ylabel('$O_3$ (ppb)')
 plt.savefig('/users/mjr583/cvao/plots/ozone_trends.png', dpi=200)
 plt.close()
 
-print(df)
-print(z)
