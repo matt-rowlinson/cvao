@@ -18,7 +18,7 @@ plt.rcParams['figure.figsize'] = (12, 4)
 gaw_path = '/users/mjr583/scratch/NCAS_CVAO/GAW_datasets/'
 epa_path = '/users/mjr583/scratch/NCAS_CVAO/EPA_datasets/'
 
-## CVAO
+## Get CVAO data from Merge file and put into DataFrame
 df=CV.get_from_merge(d['O3'], timestep='D')
 X,Y,time=CV.remove_nan_rows(df,df.index)
 df=df['mean']
@@ -50,9 +50,9 @@ for n, df in enumerate(dfs):
     time=dates[idx]
     
     z, p = np.polyfit(X, Y, 1)
-    print(z)
+    print(z*12)
     output = CV.curve_fit_function(df, X, Y, start, timestep=timestep)
-   
+    print(output[-1])
     outputs.append(output) ; times.append(time)
     CV.plot_o3_curve_from_df(df,X, Y, output, timestep=timestep, pref=pref[n], savepath='/users/mjr583/cvao/plots/')
    

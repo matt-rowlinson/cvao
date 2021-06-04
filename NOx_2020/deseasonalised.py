@@ -7,42 +7,28 @@ Script to examine different deseasonalisation techniques.
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import sys
 plt.style.use('seaborn-darkgrid')
 plt.rcParams['figure.figsize'] = (7, 7)
-filepath  = '/users/mjr583/scratch/NCAS_CVAO/CVAO_datasets/'
-savepath  = '/users/mjr583/cvao/plots/'
+savepath  = 'plots/'
 
-filen = filepath+'20200908_CV_Merge.csv'
-df = pd.read_csv(filen, index_col=0,dtype={'Airmass':str})
-df.index = pd.to_datetime(df.index,format='%Y-%m-%d %H:%M:%S')
+df=pd.read_csv('/mnt/lustre/users/mjr583/NCAS_CVAO/CVAO_datasets/NOx_Jan_2014-Dec_2020_with_flags_and_LOD_ppt.csv', index_col=0)
+df=pd.DataFrame(df)
+df.index=pd.to_datetime(df.index)
+df['NO']=df['NO_pptV']
+df['NO2']=df['NO2_pptV']
 
-filen = filepath+'cv_ovocs_2018_M_Rowlinson.csv'
-odf = pd.read_csv(filen, index_col=0)
-odf.index = pd.to_datetime(odf.index,format='%d/%m/%Y %H:%M')
+var='NO'
+dff=df[df['%s_Flag' %var] < .200 ]
+temp=dff[dff[var] >= 0. ]
+temp = pd.DataFrame( temp[var] )
+temp.columns = [var]
+df=temp
 
-cols = list(df) ; ocols = list(odf)
-for col in cols:
-    try:
-        df[col] = df[col].loc[~(df[col] <= 0.)]
-    except:
-        pass
-for col in ocols:
-    odf = odf.loc[~(odf[col] <= 0.)]
-    
 hourly = df.resample('H').mean()
 daily = df.resample('D').mean()
 monthly = df.resample('M').mean()
 yearly= df.resample('Y').mean()
-
-ohourly = odf.resample('H').mean()
-odaily = odf.resample('D').mean()
-omonthly = odf.resample('M').mean()
-oyearly= odf.resample('Y').mean()
-
-hourly = pd.concat([hourly,ohourly],axis=1,sort=False)
-daily = pd.concat([daily,odaily],axis=1,sort=False)
-monthly = pd.concat([monthly,omonthly],axis=1,sort=False)
-yearly = pd.concat([yearly,oyearly],axis=1,sort=False)
 
 years = np.arange(2006, 2006+len(yearly.index))
 colors = ['#e5f5e0','#c7e9c0','R','#74c476','#41ab5d',\
@@ -50,8 +36,7 @@ colors = ['#e5f5e0','#c7e9c0','R','#74c476','#41ab5d',\
               '#225ea8','b','#253494','#081d58','k']
 
 ## in test case just use Ozone data for now
-data = df['O3']['2007':]
-data['2009-07-01' : '2009-09-30'] = np.nan
+data = df['NO'][:'2020']
 years = len((data.resample('Y').mean()).index.year)
 
 ## method one - centered moving average
@@ -67,9 +52,11 @@ deseas_factor = monmean / std
 ds3=np.zeros(len(data))
 for n,m in enumerate(data.index.month):
     ds3[n] = data[n] + (mean - monmean[m])
-
+#print(len(ds3))
+#print(hourly[:'2020'].dropna())
+#print(monthly)
 ds3 = pd.DataFrame(ds3[:])
-ds3.index = pd.to_datetime(hourly['2007':].index,format='%d/%m/%Y')
+ds3.index = pd.to_datetime(hourly[:'2020'].dropna().index,format='%d/%m/%Y')
 ds3 = ds3.resample('M').mean()[0]
 
 ## method 4 - divide series by seasonal decomposition
@@ -114,7 +101,7 @@ for i in range(len(ds)):
     plt.xlim(data.index[0], data.index[-1])
     #plt.ylim(13,44)
 plt.tight_layout()
-plt.savefig(savepath+'/deseasonalisation_techniques.png')
+plt.savefig('plots/deseasonalisation_techniques.png')
 plt.close()
 
 plt.rcParams['figure.figsize'] = (12, 4)
@@ -124,8 +111,8 @@ plt.plot(ds1.index[-len(ds3):], ds3, label='Residuals of mean')
 plt.plot(ds4, label='Normalised by seasonal decomposition', linestyle='-.')
 plt.plot(ds5, label='X-12 ARIMA method', linestyle='--')
 plt.legend()
-plt.ylabel('$O_3$ (ppbv)')
-plt.savefig(savepath+'/deseasonalisation_comparison.png')
+plt.ylabel('NO (pptv)')
+plt.savefig('plots/deseasonalisation_comparison.png')
 plt.close()
 
 from scipy.stats.stats import pearsonr
